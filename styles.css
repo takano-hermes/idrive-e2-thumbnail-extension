@@ -1,0 +1,47 @@
+/* IDrive e2 サムネイルビューアー Styles */
+
+.e2c-thumb-wrapper {
+  transition: opacity 0.2s ease;
+}
+
+.e2c-thumb-wrapper:hover {
+  opacity: 0.85;
+}
+
+.e2c-thumb-img {
+  transition: transform 0.15s ease;
+  border: 1px solid #e0e0e0;
+}
+
+.e2c-thumb-img:hover {
+  transform: scale(1.1);
+  border-color: #1976d2;
+}
+
+.e2c-play-btn {
+  transition: transform 0.15s ease;
+}
+
+.e2c-thumb-wrapper:hover .e2c-play-btn {
+  transform: translate(-50%, -50%) scale(1.15);
+}
+
+/* オーバーレイのアニメーション */
+#e2c-thumb-overlay {
+  animation: e2c-fade-in 0.2s ease;
+}
+
+@keyframes e2c-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+#e2c-thumb-overlay img,
+#e2c-thumb-overlay video {
+  animation: e2c-scale-in 0.25s ease;
+}
+
+@keyframes e2c-scale-in {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}

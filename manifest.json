@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "IDrive e2 サムネイルビューアー",
+  "version": "1.1.0",
+  "description": "IDrive e2 バケットビューアーに画像・動画のサムネイルを表示するChrome拡張（S3 API直接アクセス）",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://console.idrivee2.com/*",
+    "https://*.idrivee2.com/*",
+    "https://*.s3.*.idrivee2.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "IDrive e2 Thumbnail",
+    "default_icon": {
+      "128": "icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://console.idrivee2.com/region/*/buckets/*/object-storage*"
+      ],
+      "js": ["lib/sigv4.js", "content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_end"
+    }
+  ],
+  "icons": {
+    "128": "icon128.png"
+  },
+  "web_accessible_resources": [{
+    "resources": ["lib/*"],
+    "matches": ["https://console.idrivee2.com/*"]
+  }]
+}

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IDrive e2 サムネイル設定</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; width: 320px; padding: 16px; background: #f8f9fa; color: #333; margin: 0; }
+    h2 { font-size: 16px; margin: 0 0 16px 0; color: #1976d2; display: flex; align-items: center; gap: 8px; }
+    h2 span { font-size: 20px; }
+    .section-title { font-size: 12px; font-weight: 700; color: #888; text-transform: uppercase; margin: 14px 0 8px 0; letter-spacing: 0.5px; }
+    .setting { margin-bottom: 10px; }
+    label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 3px; color: #555; }
+    select, input[type="number"], input[type="text"], input[type="password"] { width: 100%; padding: 6px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; box-sizing: border-box; }
+    select:focus, input:focus { outline: none; border-color: #1976d2; }
+    .btn { width: 100%; padding: 8px; background: #1976d2; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; }
+    .btn:hover { background: #1565c0; }
+    .btn-warning { background: #e65100; }
+    .btn-warning:hover { background: #bf360c; }
+    .status { text-align: center; font-size: 12px; margin-top: 8px; color: #666; min-height: 18px; }
+    .status.ok { color: #2e7d32; }
+    .status.err { color: #c62828; }
+    hr { border: none; border-top: 1px solid #ddd; margin: 12px 0; }
+    .info { font-size: 11px; color: #888; line-height: 1.5; }
+    .hint { font-size: 11px; color: #999; margin-top: 2px; }
+  </style>
+</head>
+<body>
+  <h2><span>🖼️</span> IDrive e2 サムネイル</h2>
+
+  <div class="section-title">🔑 S3 認証情報</div>
+
+  <div class="setting">
+    <label for="accessKeyId">Access Key ID</label>
+    <input type="text" id="accessKeyId" placeholder="例: 6wPB0CkAMi93kOYul400">
+  </div>
+
+  <div class="setting">
+    <label for="secretAccessKey">Secret Access Key</label>
+    <input type="password" id="secretAccessKey" placeholder="シークレットキー">
+  </div>
+
+  <div class="setting">
+    <label for="s3Region">S3 リージョン</label>
+    <select id="s3Region">
+      <option value="ap-northeast-1">ap-northeast-1 (東京/TYO)</option>
+      <option value="us-east-1">us-east-1 (バージニア/IAD)</option>
+      <option value="eu-central-1">eu-central-1 (フランクフルト/FRA)</option>
+      <option value="eu-west-2">eu-west-2 (ロンドン/LHR)</option>
+      <option value="ap-southeast-1">ap-southeast-1 (シンガポール/SGP)</option>
+    </select>
+  </div>
+
+  <div class="section-title">⚙️ 表示設定</div>
+
+  <div class="setting">
+    <label for="clickAction">クリック時の動作</label>
+    <select id="clickAction">
+      <option value="overlay">オーバーレイ表示</option>
+      <option value="newtab">新規タブで開く</option>
+    </select>
+  </div>
+
+  <div class="setting">
+    <label for="thumbSize">サムネイルサイズ (px)</label>
+    <input type="number" id="thumbSize" min="20" max="120" step="5">
+  </div>
+
+  <button class="btn" id="saveBtn">💾 保存</button>
+  <div class="status" id="status"></div>
+
+  <hr>
+
+  <div class="info">
+    <strong>使い方:</strong><br>
+    1. IDrive e2 コンソールで <strong>Access Keys</strong> を開く<br>
+    2. 「Create Access Key」でキーを発行<br>
+    3. 上記の Access Key ID / Secret Key を入力して保存<br>
+    4. バケットビューアーを開くとサムネイルが表示されます<br><br>
+    <strong>注意:</strong> 認証情報はブラウザの <code>chrome.storage</code> に暗号化されて保存されます
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
