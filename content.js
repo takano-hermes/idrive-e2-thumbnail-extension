@@ -709,12 +709,15 @@
     setTimeout(waitForTable, 1500);
   }
 
-  // URL変更検知
+  // URL変更検知（SPA遷移対応）
   let lastUrl = location.href;
   setInterval(() => {
     if (location.href !== lastUrl) {
       lastUrl = location.href;
       processedRows = new WeakSet();
+      presignedUrlCache = new Map();
+      // 既存のサムネイル要素をすべて削除（古いprefixの画像が残る問題対策）
+      document.querySelectorAll('.e2c-thumb-wrapper').forEach(el => el.remove());
       setTimeout(processAllRows, 1000);
     }
   }, 2000);
