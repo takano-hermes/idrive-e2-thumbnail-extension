@@ -45,3 +45,51 @@
   from { transform: scale(0.9); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
+
+/* ナビゲーションバー */
+.e2c-overlay-bottom-bar {
+  position: absolute;
+  bottom: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0,0,0,0.6);
+  border-radius: 8px;
+  padding: 6px 12px;
+  white-space: nowrap;
+}
+
+.e2c-nav-btn {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.3);
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 4px 8px;
+  min-width: 32px;
+  text-align: center;
+  transition: background 0.15s;
+  line-height: 1.2;
+}
+
+.e2c-nav-btn:hover:not(.disabled) {
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.6);
+}
+
+.e2c-nav-btn.disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.e2c-filename {
+  color: #ccc;
+  font-size: 13px;
+  padding: 0 8px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
