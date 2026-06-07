@@ -628,16 +628,24 @@
       return;
     }
     processedRows.add(row);
-    if (row.querySelector('.e2c-thumb-wrapper')) {
-      log('processRow: SKIP - already has thumbnail wrapper');
-      return;
-    }
 
     const filename = getFilename(row);
     log('processRow: filename?', filename);
     if (!filename) {
       log('processRow: filename is null/empty, row HTML:', row.innerHTML.slice(0, 200));
       return;
+    }
+
+    // 仮想スクロール対応: 既存のサムネイルが正しいファイル名かを確認
+    const existingWrapper = row.querySelector('.e2c-thumb-wrapper');
+    if (existingWrapper) {
+      const img = existingWrapper.querySelector('img');
+      if (img && img.alt === filename) {
+        log('processRow: SKIP - thumbnail already matches', filename);
+        return;
+      }
+      log('processRow: REMOVE stale thumbnail (was', img?.alt, ', now', filename + ')');
+      existingWrapper.remove();
     }
 
     const ext = getExtension(filename);
