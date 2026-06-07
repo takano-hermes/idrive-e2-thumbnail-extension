@@ -7,19 +7,13 @@ IDrive e2 バケットビューアーに画像・動画の**サムネイル**を
 
 S3互換APIのSigV4署名をブラウザ内で計算し、PreSigned URLを生成してサムネイルを表示します。
 
-- **通常の画面**
-  サムネイルが表示されないので、わかりにくいです。
+![写真リスト](screenshot/photo-list.png)
 
-  ![通常の画面](screenshot/default-list-view.png)
+![写真ビューアー](screenshot/photo-viewer.png)
 
-- **サムネイルを追加した画面**
-  サムネイルがあると、わかりやすい！
+![動画リスト](screenshot/video-list.png)
 
-  ![サムネイルを追加した画面](screenshot/after-add-thumbnail.png)
-
-- **画像をクリックすると拡大表示**
-
-  ![画像をクリックすると拡大表示](screenshot/view-image.png)
+![動画ビューアー](screenshot/video-viewer.png)
 
 ## 機能
 
