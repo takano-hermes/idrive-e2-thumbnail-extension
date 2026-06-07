@@ -2,6 +2,13 @@
 'use strict';
 
 // ============================================================
+// DEBUG
+// ============================================================
+const DEBUG = false; // デバッグログON/OFF
+const log = DEBUG ? console.log.bind(console, '[Player]') : () => {};
+const warn = DEBUG ? console.warn.bind(console, '[Player]') : () => {};
+
+// ============================================================
 // 状態
 // ============================================================
 const state = {
@@ -46,7 +53,7 @@ async function init() {
   state.currentPrefix = response.currentPrefix || '';
   state.parentPrefix = response.parentPrefix || '';
 
-  console.log('[Player] Init:', state.fileList.length, 'videos, start idx=', state.currentIndex);
+  log('Init:', state.fileList.length, 'videos, start idx=', state.currentIndex);
 
   // フォルダナビゲーションの初期化（siblings は Phase 2 以降）
   state.siblings = [];
@@ -79,19 +86,12 @@ async function loadVideo(index) {
     return;
   }
 
-  videoEl.src = url;
-  videoEl.play().catch((err) => {
-    // ユーザー操作が必要な場合がある（autoplayポリシー）
-    console.log('[Player] play() failed:', err.message);
-    // controls があるのでユーザーが手動再生可能
-  });
-
-  // イベントハンドラ
+  // イベントハンドラは src 設定前にセット（同期発火を逃さない）
   videoEl.onloadeddata = () => {
     hideLoading();
     hideError();
     updateUI();
-    console.log('[Player] Loaded:', item.filename);
+    log('Loaded:', item.filename);
   };
   videoEl.onerror = () => {
     const mediaError = videoEl.error;
@@ -105,6 +105,13 @@ async function loadVideo(index) {
       loadVideo(state.currentIndex + 1);
     }
   };
+
+  videoEl.src = url;
+  videoEl.play().catch((err) => {
+    // ユーザー操作が必要な場合がある（autoplayポリシー）
+    log('play() failed:', err.message);
+    // controls があるのでユーザーが手動再生可能
+  });
 
   updateUI();
 }
@@ -133,7 +140,7 @@ function sendMessage(type, payload) {
   return new Promise((resolve) => {
     chrome.runtime.sendMessage({ type, payload }, (response) => {
       if (chrome.runtime.lastError) {
-        console.warn('[Player] sendMessage error:', chrome.runtime.lastError.message);
+        warn('sendMessage error:', chrome.runtime.lastError.message);
         resolve(null);
         return;
       }
@@ -262,6 +269,7 @@ function bindUI() {
   // ナビゲーション
   $('prevBtn').addEventListener('click', navigatePrev);
   $('nextBtn').addEventListener('click', navigateNext);
+  // フォルダナビゲーションは Phase 2 で実装予定
   $('prevFolderBtn').addEventListener('click', () => {});
   $('nextFolderBtn').addEventListener('click', () => {});
 
