@@ -30,6 +30,23 @@
   let presignedUrlCache = new Map();
   let s3Ready = false;
 
+  // 現在のオーバーレイ状態
+  let overlayState = {
+    overlayEl: null,
+    currentIndex: -1,
+    fileList: [],
+    isPlayingVideo: false,
+    videoEl: null,
+  };
+
+  // フォルダナビゲーション状態
+  let folderState = {
+    history: [],
+    currentPrefix: '',
+    siblings: [],
+    currentSiblingIndex: -1,
+  };
+
   // ============================================================
   // 設定読み込み
   // ============================================================
