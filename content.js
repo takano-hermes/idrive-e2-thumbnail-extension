@@ -798,15 +798,22 @@
 
       case 'GET_PRESIGNED_URL': {
         const { bucket, key, region } = msg.payload;
+        log('GET_PRESIGNED_URL: bucket=', bucket, 'key=', key, 'region=', region, 's3Ready=', s3Ready);
         getPresignedUrl(bucket, key, region).then(url => {
+          log('GET_PRESIGNED_URL RESULT: url=', url ? url.slice(0, 60) + '...' : 'null');
           sendResponse({ type: 'PRESIGNED_URL', payload: { url } });
+        }).catch(err => {
+          log('GET_PRESIGNED_URL ERROR:', err.message);
+          sendResponse({ type: 'PRESIGNED_URL', payload: { url: null } });
         });
         return true; // async
       }
 
       case 'LIST_OBJECTS': {
         const { bucket, prefix, region } = msg.payload;
+        log('LIST_OBJECTS: bucket=', bucket, 'prefix=', prefix, 'region=', region);
         fetchFolderSiblings(bucket, region, prefix).then(prefixes => {
+          log('LIST_OBJECTS RESULT: prefixes=', prefixes);
           sendResponse({ type: 'LIST_OBJECTS_RESULT', payload: { prefixes } });
         });
         return true; // async

@@ -5,7 +5,7 @@
 // ============================================================
 // DEBUG
 // ============================================================
-const DEBUG = false; // デバッグログON/OFF
+const DEBUG = true; // デバッグログON/OFF
 const log = DEBUG ? console.log.bind(console, '[SW]') : () => {};
 const warn = DEBUG ? console.warn.bind(console, '[SW]') : () => {};
 
