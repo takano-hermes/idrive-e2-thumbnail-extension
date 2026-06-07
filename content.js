@@ -372,6 +372,89 @@
   }
 
   // ============================================================
+  // HEIC/HEIF 非対応形式検出
+  // ============================================================
+  const unsupportedImageExts = new Set(['.heic', '.heif']);
+  function isUnsupportedImage(filename) {
+    const ext = getExtension(filename);
+    return unsupportedImageExts.has(ext);
+  }
+
+  function createUnsupportedImageFallback(filename, url) {
+    const container = document.createElement('div');
+    container.style.cssText = `display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px;text-align:center;width:100%;`;
+
+    // まずは「読み込み中」状態
+    const loadingEl = document.createElement('div');
+    loadingEl.textContent = '⏳';
+    loadingEl.style.cssText = `font-size:32px;opacity:0.5;`;
+    container.appendChild(loadingEl);
+
+    // Async: サムネイルを試す
+    (async () => {
+      const { bucket, prefix } = parseURL();
+      const s3Region = settings.s3Region || regionToEndpoint(parseURL().region);
+      const thumbKey = (prefix || '') + CONFIG.thumbDir + '/' + filename + CONFIG.thumbSuffix;
+
+      const thumbUrl = await getPresignedUrl(bucket, thumbKey, s3Region);
+
+      if (thumbUrl) {
+        // ✅ サムネイル取得成功 → 画像表示
+        container.innerHTML = '';
+
+        const img = document.createElement('img');
+        img.src = thumbUrl;
+        img.style.cssText = `max-width:85vw;max-height:75vh;object-fit:contain;border-radius:8px;cursor:default;`;
+        img.loading = 'lazy';
+
+        const label = document.createElement('div');
+        label.textContent = '💡 サムネイル表示（.heic形式のため元画像のプレビューです）';
+        label.style.cssText = `color:#999;font-size:12px;margin-top:4px;`;
+
+        const link = document.createElement('a');
+        link.href = url;
+        link.target = '_blank';
+        link.textContent = '🔗 元ファイルを開く（ダウンロード）';
+        link.style.cssText = `color:#64b5f6;font-size:13px;text-decoration:none;padding:6px 14px;border:1px solid #64b5f6;border-radius:6px;cursor:pointer;transition:background 0.15s;margin-top:4px;`;
+        link.addEventListener('mouseenter', () => { link.style.background = 'rgba(100,181,246,0.1)'; });
+        link.addEventListener('mouseleave', () => { link.style.background = 'transparent'; });
+        link.addEventListener('click', (e) => { e.stopPropagation(); });
+
+        container.append(img, label, link);
+
+      } else {
+        // ❌ サムネイルなし → 従来のフォールバック
+        container.innerHTML = '';
+
+        const icon = document.createElement('div');
+        icon.textContent = '🖼️';
+        icon.style.cssText = `font-size:48px;opacity:0.5;`;
+
+        const msg = document.createElement('div');
+        msg.textContent = 'この画像形式 (.heic/.heif) はブラウザで表示できません';
+        msg.style.cssText = `color:#aaa;font-size:14px;`;
+
+        const hint = document.createElement('div');
+        hint.textContent = 'ダウンロードして対応アプリで開いてください';
+        hint.style.cssText = `color:#777;font-size:12px;`;
+
+        const link = document.createElement('a');
+        link.href = url;
+        link.target = '_blank';
+        link.textContent = '🔗 新規タブで開く (ダウンロード)';
+        link.style.cssText = `color:#64b5f6;font-size:14px;text-decoration:none;padding:8px 16px;border:1px solid #64b5f6;border-radius:6px;cursor:pointer;transition:background 0.15s;`;
+        link.addEventListener('mouseenter', () => { link.style.background = 'rgba(100,181,246,0.1)'; });
+        link.addEventListener('mouseleave', () => { link.style.background = 'transparent'; });
+        link.addEventListener('click', (e) => { e.stopPropagation(); });
+
+        container.append(icon, msg, hint, link);
+      }
+    })();
+
+    return container;
+  }
+
+  // ============================================================
   // オーバーレイ（ナビゲーション対応）
   // ============================================================
   function showOverlay(url, filename, isVideo, currentIndex) {
@@ -403,6 +486,8 @@
       mediaEl.controls = true;
       mediaEl.autoplay = true;
       mediaEl.style.cssText = `max-width:90vw;max-height:85vh;border-radius:8px;`;
+    } else if (isUnsupportedImage(filename)) {
+      mediaEl = createUnsupportedImageFallback(filename, url);
     } else {
       mediaEl = document.createElement('img');
       mediaEl.src = url;
@@ -505,6 +590,8 @@
       newMedia.controls = true;
       newMedia.autoplay = true;
       newMedia.style.cssText = `max-width:90vw;max-height:85vh;border-radius:8px;`;
+    } else if (isUnsupportedImage(filename)) {
+      newMedia = createUnsupportedImageFallback(filename, url);
     } else {
       newMedia = document.createElement('img');
       newMedia.src = url;
