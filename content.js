@@ -126,6 +126,26 @@
   }
 
   // ============================================================
+  // XML パース（CommonPrefixes抽出）
+  // ============================================================
+  /**
+   * ListObjectsV2 XML レスポンスから CommonPrefixes（フォルダ）を抽出
+   * @param {string} xmlText
+   * @returns {string[]} prefixのリスト（例: ['photos/', 'docs/']）
+   */
+  function parseCommonPrefixes(xmlText) {
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(xmlText, 'text/xml');
+    const commonPrefixes = xml.querySelectorAll('CommonPrefixes > Prefix');
+    const prefixes = [];
+    commonPrefixes.forEach(el => {
+      const p = el.textContent.trim();
+      if (p) prefixes.push(p);
+    });
+    return prefixes;
+  }
+
+  // ============================================================
   // PreSignedURL 生成（SigV4）
   // ============================================================
   async function getPresignedUrl(bucket, key, region) {
@@ -157,6 +177,58 @@
     } catch (e) {
       log('getPresignedUrl: ERROR', e.message || e);
       return null;
+    }
+  }
+
+  // ============================================================
+  // List用 PresignedURL 生成ラッパー
+  // ============================================================
+  async function getListPresignedUrl(bucket, prefix, region) {
+    if (!s3Ready) return null;
+    try {
+      const s3Region = settings.s3Region || regionToEndpoint(region);
+      const url = await window.E2C_S3.getPresignedUrlList({
+        accessKeyId: settings.accessKeyId,
+        secretAccessKey: settings.secretAccessKey,
+        region: s3Region,
+        bucket: bucket,
+        prefix: prefix,
+        expiresIn: 300,
+      });
+      return url;
+    } catch (e) {
+      log('getListPresignedUrl ERROR:', e.message || e);
+      return null;
+    }
+  }
+
+  // ============================================================
+  // フォルダ一覧取得（ListObjects V2）
+  // ============================================================
+  /**
+   * ListObjects API を呼び、指定 parentPrefix 下のフォルダ（CommonPrefixes）一覧を取得
+   * @param {string} bucket
+   * @param {string} region
+   * @param {string} parentPrefix - 親フォルダのprefix
+   * @returns {Promise<string[]>} フォルダprefixの配列（空の場合は空配列）
+   */
+  async function fetchFolderSiblings(bucket, region, parentPrefix) {
+    if (!s3Ready) return [];
+    const url = await getListPresignedUrl(bucket, parentPrefix, region);
+    if (!url) return [];
+
+    try {
+      const resp = await fetch(url);
+      if (!resp.ok) {
+        log('fetchFolderSiblings HTTP', resp.status, resp.statusText);
+        return [];
+      }
+      const xml = await resp.text();
+      const prefixes = parseCommonPrefixes(xml);
+      return prefixes;
+    } catch (e) {
+      log('fetchFolderSiblings FETCH ERROR:', e.message);
+      return [];
     }
   }
 
