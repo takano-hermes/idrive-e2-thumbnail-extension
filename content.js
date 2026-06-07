@@ -696,21 +696,6 @@
     observer = new MutationObserver(() => processAllRows());
     observer.observe(target, { childList: true, subtree: true });
     processAllRows();
-
-    // 仮想スクロール対策: content wrapper の style.transform 変更を監視
-    // Angular CDK はスクロール時に translateY を更新する
-    const contentWrapper = target.querySelector('.cdk-virtual-scroll-content-wrapper');
-    if (contentWrapper) {
-      let transformTimer;
-      const transformObserver = new MutationObserver(() => {
-        clearTimeout(transformTimer);
-        transformTimer = setTimeout(() => {
-          processedRows = new WeakSet();
-          processAllRows();
-        }, 200);
-      });
-      transformObserver.observe(contentWrapper, { attributes: true, attributeFilter: ['style'] });
-    }
   }
 
   // ============================================================
@@ -746,6 +731,16 @@
       // 既存のサムネイル要素をすべて削除（古いprefixの画像が残る問題対策）
       document.querySelectorAll('.e2c-thumb-wrapper').forEach(el => el.remove());
       setTimeout(processAllRows, 1000);
+    }
+  }, 2000);
+
+  // 仮想スクロール定期チェック: 2秒ごとに全行のサムネイル一致確認
+  // cdk-virtual-scroll-viewport は DOM 行を再利用するため、イベント検出が困難
+  // processRow 内の img.alt === filename 照合により、正しい行は即座にスキップされる
+  setInterval(() => {
+    if (s3Ready) {
+      processedRows = new WeakSet();
+      processAllRows();
     }
   }, 2000);
 
