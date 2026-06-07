@@ -697,14 +697,19 @@
     observer.observe(target, { childList: true, subtree: true });
     processAllRows();
 
-    // 仮想スクロール対策: スクロール時にサムネイルの再チェック
-    const scrollTarget = target.tagName === 'CDK-VIRTUAL-SCROLL-VIEWPORT' ? target : target.querySelector('cdk-virtual-scroll-viewport');
-    if (scrollTarget) {
-      let scrollTimeout;
-      scrollTarget.addEventListener('scroll', () => {
-        clearTimeout(scrollTimeout);
-        scrollTimeout = setTimeout(processAllRows, 300);
-      }, { passive: true });
+    // 仮想スクロール対策: content wrapper の style.transform 変更を監視
+    // Angular CDK はスクロール時に translateY を更新する
+    const contentWrapper = target.querySelector('.cdk-virtual-scroll-content-wrapper');
+    if (contentWrapper) {
+      let transformTimer;
+      const transformObserver = new MutationObserver(() => {
+        clearTimeout(transformTimer);
+        transformTimer = setTimeout(() => {
+          processedRows = new WeakSet();
+          processAllRows();
+        }, 200);
+      });
+      transformObserver.observe(contentWrapper, { attributes: true, attributeFilter: ['style'] });
     }
   }
 
