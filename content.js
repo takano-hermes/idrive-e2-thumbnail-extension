@@ -322,6 +322,10 @@
     // クリック
     wrapper.addEventListener('click', async (e) => {
       e.stopPropagation();
+      // 仮想スクロール対策: クリック時にDOMから現在のファイル名を再取得
+      const row = wrapper.closest('.e2c-tb-rw');
+      const currentFilename = row ? getFilename(row) : filename;
+      const objKey = (prefix || '') + currentFilename;
       const url = await getPresignedUrl(bucket, objKey, region);
       if (!url) return;
       if (settings.clickAction === 'newtab') {
@@ -329,10 +333,10 @@
       } else {
         overlayState.fileList = buildFileList();
         const currentIdx = overlayState.fileList.findIndex(
-          item => item.filename === filename && item.bucket === bucket
+          item => item.filename === currentFilename && item.bucket === bucket
         );
         overlayState.currentIndex = currentIdx >= 0 ? currentIdx : 0;
-        showOverlay(url, filename, isVideo, overlayState.currentIndex);
+        showOverlay(url, currentFilename, isVideo, overlayState.currentIndex);
       }
     });
 
@@ -692,6 +696,16 @@
     observer = new MutationObserver(() => processAllRows());
     observer.observe(target, { childList: true, subtree: true });
     processAllRows();
+
+    // 仮想スクロール対策: スクロール時にサムネイルの再チェック
+    const scrollTarget = target.tagName === 'CDK-VIRTUAL-SCROLL-VIEWPORT' ? target : target.querySelector('cdk-virtual-scroll-viewport');
+    if (scrollTarget) {
+      let scrollTimeout;
+      scrollTarget.addEventListener('scroll', () => {
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(processAllRows, 300);
+      }, { passive: true });
+    }
   }
 
   // ============================================================
