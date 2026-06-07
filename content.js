@@ -327,7 +327,12 @@
       if (settings.clickAction === 'newtab') {
         window.open(url, '_blank');
       } else {
-        showOverlay(url, filename, isVideo);
+        overlayState.fileList = buildFileList();
+        const currentIdx = overlayState.fileList.findIndex(
+          item => item.filename === filename && item.bucket === bucket
+        );
+        overlayState.currentIndex = currentIdx >= 0 ? currentIdx : 0;
+        showOverlay(url, filename, isVideo, overlayState.currentIndex);
       }
     });
 
@@ -337,51 +342,281 @@
   }
 
   // ============================================================
-  // オーバーレイ
+  // オーバーレイ（ナビゲーション対応）
   // ============================================================
-  function showOverlay(url, filename, isVideo) {
+  function showOverlay(url, filename, isVideo, currentIndex) {
     const existing = document.getElementById('e2c-thumb-overlay');
     if (existing) existing.remove();
+
+    // 既存のkeydownリスナーを削除（多重登録防止）
+    document.removeEventListener('keydown', onOverlayKeydown);
+
+    overlayState.currentIndex = currentIndex >= 0 ? currentIndex : 0;
 
     const overlay = document.createElement('div');
     overlay.id = 'e2c-thumb-overlay';
     overlay.style.cssText = `position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:999999;display:flex;align-items:center;justify-content:center;cursor:zoom-out;`;
 
     const content = document.createElement('div');
+    content.className = 'e2c-overlay-content';
     content.style.cssText = `max-width:90vw;max-height:90vh;position:relative;`;
 
     const closeBtn = document.createElement('button');
+    closeBtn.className = 'e2c-overlay-close';
     closeBtn.textContent = '✕';
     closeBtn.style.cssText = `position:absolute;top:-40px;right:0;background:none;border:none;color:white;font-size:28px;cursor:pointer;z-index:10;`;
 
+    let mediaEl;
+    if (isVideo) {
+      mediaEl = document.createElement('video');
+      mediaEl.src = url;
+      mediaEl.controls = true;
+      mediaEl.autoplay = true;
+      mediaEl.style.cssText = `max-width:90vw;max-height:85vh;border-radius:8px;`;
+    } else {
+      mediaEl = document.createElement('img');
+      mediaEl.src = url;
+      mediaEl.style.cssText = `max-width:90vw;max-height:85vh;object-fit:contain;border-radius:8px;`;
+      mediaEl.onerror = () => { mediaEl.alt = '⛔ 画像を読み込めません'; };
+    }
+
+    const bottomBar = createNavigationBar(filename);
     const title = document.createElement('div');
+    title.className = 'e2c-overlay-title';
     title.textContent = filename;
     title.style.cssText = `position:absolute;bottom:-30px;left:0;color:#ccc;font-size:14px;`;
 
-    if (isVideo) {
-      const video = document.createElement('video');
-      video.src = url;
-      video.controls = true;
-      video.autoplay = true;
-      video.style.cssText = `max-width:90vw;max-height:85vh;border-radius:8px;`;
-      content.appendChild(video);
-    } else {
-      const img = document.createElement('img');
-      img.src = url;
-      img.style.cssText = `max-width:90vw;max-height:85vh;object-fit:contain;border-radius:8px;`;
-      img.onerror = () => { img.alt = '⛔ 画像を読み込めません'; img.style.width = '200px'; img.style.height = '200px'; };
-      content.appendChild(img);
-    }
-
+    content.appendChild(mediaEl);
     content.appendChild(closeBtn);
     content.appendChild(title);
+    content.appendChild(bottomBar);
     overlay.appendChild(content);
     document.body.appendChild(overlay);
 
-    const close = () => overlay.remove();
-    closeBtn.addEventListener('click', close);
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); }, { once: true });
+    overlayState.overlayEl = overlay;
+
+    closeBtn.addEventListener('click', () => {
+      closeOverlay();
+      document.removeEventListener('keydown', onOverlayKeydown);
+    });
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        closeOverlay();
+        document.removeEventListener('keydown', onOverlayKeydown);
+      }
+    });
+    document.addEventListener('keydown', onOverlayKeydown);
+
+    updateNavButtons();
+  }
+
+  function createNavigationBar(filename) {
+    const bar = document.createElement('div');
+    bar.className = 'e2c-overlay-bottom-bar';
+
+    const prevFolder = document.createElement('button');
+    prevFolder.className = 'e2c-nav-btn e2c-nav-prev-folder';
+    prevFolder.textContent = '⏮';
+    prevFolder.title = '前のフォルダ';
+    prevFolder.addEventListener('click', (e) => { e.stopPropagation(); navigatePrevFolder(); });
+
+    const prev = document.createElement('button');
+    prev.className = 'e2c-nav-btn e2c-nav-prev';
+    prev.textContent = '◀';
+    prev.title = '前へ';
+    prev.addEventListener('click', (e) => { e.stopPropagation(); navigatePrev(); });
+
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'e2c-filename';
+    nameSpan.textContent = filename;
+
+    const next = document.createElement('button');
+    next.className = 'e2c-nav-btn e2c-nav-next';
+    next.textContent = '▶';
+    next.title = '次へ';
+    next.addEventListener('click', (e) => { e.stopPropagation(); navigateNext(); });
+
+    const nextFolder = document.createElement('button');
+    nextFolder.className = 'e2c-nav-btn e2c-nav-next-folder';
+    nextFolder.textContent = '⏭';
+    nextFolder.title = '次のフォルダ';
+    nextFolder.addEventListener('click', (e) => { e.stopPropagation(); navigateNextFolder(); });
+
+    const slideshow = document.createElement('button');
+    slideshow.className = 'e2c-nav-btn disabled';
+    slideshow.textContent = '⏩';
+    slideshow.title = 'スライドショー（準備中）';
+    slideshow.disabled = true;
+
+    bar.append(prevFolder, prev, nameSpan, next, nextFolder, slideshow);
+    return bar;
+  }
+
+  function updateOverlayContent(url, filename, isVideo) {
+    const content = overlayState.overlayEl?.querySelector('.e2c-overlay-content');
+    if (!content) return;
+
+    // 古いメディア要素を削除（videoの場合は停止）
+    const oldMedia = content.querySelector('img, video');
+    if (oldMedia) {
+      if (oldMedia.tagName === 'VIDEO') {
+        oldMedia.pause();
+        oldMedia.removeAttribute('src');
+        oldMedia.load();
+      }
+      oldMedia.remove();
+    }
+
+    // 新しいメディア要素を作成
+    let newMedia;
+    if (isVideo) {
+      newMedia = document.createElement('video');
+      newMedia.src = url;
+      newMedia.controls = true;
+      newMedia.autoplay = true;
+      newMedia.style.cssText = `max-width:90vw;max-height:85vh;border-radius:8px;`;
+    } else {
+      newMedia = document.createElement('img');
+      newMedia.src = url;
+      newMedia.style.cssText = `max-width:90vw;max-height:85vh;object-fit:contain;border-radius:8px;`;
+      newMedia.onerror = () => { newMedia.alt = '⛔ 画像を読み込めません'; };
+    }
+
+    const closeBtn = content.querySelector('.e2c-overlay-close');
+    content.insertBefore(newMedia, closeBtn);
+
+    // ファイル名更新
+    const titleEl = content.querySelector('.e2c-overlay-title');
+    if (titleEl) titleEl.textContent = filename;
+    const filenameEl = content.querySelector('.e2c-filename');
+    if (filenameEl) filenameEl.textContent = filename;
+
+    updateNavButtons();
+  }
+
+  function updateNavButtons() {
+    const bar = overlayState.overlayEl?.querySelector('.e2c-overlay-bottom-bar');
+    if (!bar) return;
+
+    const prevBtn = bar.querySelector('.e2c-nav-prev');
+    const nextBtn = bar.querySelector('.e2c-nav-next');
+    const prevFolderBtn = bar.querySelector('.e2c-nav-prev-folder');
+    const nextFolderBtn = bar.querySelector('.e2c-nav-next-folder');
+
+    prevBtn.classList.toggle('disabled', overlayState.currentIndex <= 0);
+    nextBtn.classList.toggle('disabled', overlayState.currentIndex >= overlayState.fileList.length - 1);
+    prevFolderBtn.classList.toggle('disabled', folderState.currentSiblingIndex <= 0);
+    nextFolderBtn.classList.toggle('disabled', folderState.currentSiblingIndex >= folderState.siblings.length - 1);
+  }
+
+  function closeOverlay() {
+    if (overlayState.overlayEl) {
+      overlayState.overlayEl.remove();
+      overlayState.overlayEl = null;
+    }
+    overlayState.currentIndex = -1;
+    overlayState.fileList = [];
+  }
+
+  function onOverlayKeydown(e) {
+    switch (e.key) {
+      case 'ArrowLeft':
+        e.preventDefault();
+        navigatePrev();
+        break;
+      case 'ArrowRight':
+        e.preventDefault();
+        navigateNext();
+        break;
+      case 'Escape':
+        closeOverlay();
+        document.removeEventListener('keydown', onOverlayKeydown);
+        break;
+    }
+  }
+
+  async function navigatePrev() {
+    if (overlayState.currentIndex <= 0) return;
+    const newIdx = overlayState.currentIndex - 1;
+    const item = overlayState.fileList[newIdx];
+    const url = await getPresignedUrl(item.bucket, item.key, item.region);
+    if (!url) return;
+    overlayState.currentIndex = newIdx;
+    updateOverlayContent(url, item.filename, item.isVideo);
+  }
+
+  async function navigateNext() {
+    if (overlayState.currentIndex >= overlayState.fileList.length - 1) return;
+    const newIdx = overlayState.currentIndex + 1;
+    const item = overlayState.fileList[newIdx];
+    const url = await getPresignedUrl(item.bucket, item.key, item.region);
+    if (!url) return;
+    overlayState.currentIndex = newIdx;
+    updateOverlayContent(url, item.filename, item.isVideo);
+  }
+
+  async function navigatePrevFolder() {
+    const { region, bucket } = parseURL();
+    if (folderState.currentSiblingIndex <= 0) return;
+    const targetPrefix = folderState.siblings[folderState.currentSiblingIndex - 1];
+    folderState.history.push({
+      currentPrefix: folderState.currentPrefix,
+      siblings: folderState.siblings,
+    });
+    folderState.currentPrefix = targetPrefix;
+    updateURLPrefix(targetPrefix);
+    closeOverlay();
+    folderState.siblings = await fetchFolderSiblings(bucket, region, targetPrefix);
+    folderState.currentSiblingIndex = folderState.siblings.indexOf(targetPrefix);
+  }
+
+  async function navigateNextFolder() {
+    const { region, bucket } = parseURL();
+    if (folderState.currentSiblingIndex >= folderState.siblings.length - 1) return;
+    const targetPrefix = folderState.siblings[folderState.currentSiblingIndex + 1];
+    folderState.history.push({
+      currentPrefix: folderState.currentPrefix,
+      siblings: folderState.siblings,
+    });
+    folderState.currentPrefix = targetPrefix;
+    updateURLPrefix(targetPrefix);
+    closeOverlay();
+    folderState.siblings = await fetchFolderSiblings(bucket, region, targetPrefix);
+    folderState.currentSiblingIndex = folderState.siblings.indexOf(targetPrefix);
+  }
+
+  function getParentPrefix(prefix) {
+    if (!prefix || prefix === '') return '';
+    const withoutTrailing = prefix.endsWith('/') ? prefix.slice(0, -1) : prefix;
+    const lastSlash = withoutTrailing.lastIndexOf('/');
+    if (lastSlash < 0) return '';
+    return withoutTrailing.slice(0, lastSlash + 1);
+  }
+
+  function updateURLPrefix(newPrefix) {
+    const url = new URL(window.location.href);
+    if (newPrefix) {
+      url.searchParams.set('prefix', newPrefix);
+    } else {
+      url.searchParams.delete('prefix');
+    }
+    window.history.pushState({}, '', url.toString());
+    processedRows = new WeakSet();
+    setTimeout(processAllRows, 500);
+  }
+
+  async function initFolderNavigation() {
+    const { region, bucket, prefix } = parseURL();
+    if (!bucket) return;
+
+    const parentPrefix = getParentPrefix(prefix);
+    folderState.currentPrefix = prefix;
+    folderState.history = [];
+
+    const siblings = await fetchFolderSiblings(bucket, region, parentPrefix);
+    folderState.siblings = siblings;
+    folderState.currentSiblingIndex = siblings.indexOf(prefix);
+    log('initFolderNavigation: siblings=', siblings, 'currentIndex=', folderState.currentSiblingIndex);
   }
 
   // ============================================================
@@ -466,6 +701,7 @@
     const waitForTable = () => {
       if (document.querySelector('.e2c-table')) {
         startObserver();
+        initFolderNavigation();
       } else {
         setTimeout(waitForTable, 500);
       }
@@ -494,4 +730,11 @@
   });
 
   init();
+
+  // popstate イベント対応：ブラウザの戻る/進むでフォルダ状態をリセット
+  window.addEventListener('popstate', () => {
+    folderState.history = [];
+    folderState.siblings = [];
+    folderState.currentSiblingIndex = -1;
+  });
 })();
