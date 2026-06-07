@@ -322,6 +322,10 @@
     // クリック
     wrapper.addEventListener('click', async (e) => {
       e.stopPropagation();
+      // 仮想スクロール対策: クリック時にDOMから現在のファイル名を再取得
+      const row = wrapper.closest('.e2c-tb-rw');
+      const currentFilename = row ? getFilename(row) : filename;
+      const objKey = (prefix || '') + currentFilename;
       const url = await getPresignedUrl(bucket, objKey, region);
       if (!url) return;
       if (settings.clickAction === 'newtab') {
@@ -329,10 +333,10 @@
       } else {
         overlayState.fileList = buildFileList();
         const currentIdx = overlayState.fileList.findIndex(
-          item => item.filename === filename && item.bucket === bucket
+          item => item.filename === currentFilename && item.bucket === bucket
         );
         overlayState.currentIndex = currentIdx >= 0 ? currentIdx : 0;
-        showOverlay(url, filename, isVideo, overlayState.currentIndex);
+        showOverlay(url, currentFilename, isVideo, overlayState.currentIndex);
       }
     });
 
@@ -628,16 +632,24 @@
       return;
     }
     processedRows.add(row);
-    if (row.querySelector('.e2c-thumb-wrapper')) {
-      log('processRow: SKIP - already has thumbnail wrapper');
-      return;
-    }
 
     const filename = getFilename(row);
     log('processRow: filename?', filename);
     if (!filename) {
       log('processRow: filename is null/empty, row HTML:', row.innerHTML.slice(0, 200));
       return;
+    }
+
+    // 仮想スクロール対応: 既存のサムネイルが正しいファイル名かを確認
+    const existingWrapper = row.querySelector('.e2c-thumb-wrapper');
+    if (existingWrapper) {
+      const img = existingWrapper.querySelector('img');
+      if (img && img.alt === filename) {
+        log('processRow: SKIP - thumbnail already matches', filename);
+        return;
+      }
+      log('processRow: REMOVE stale thumbnail (was', img?.alt, ', now', filename + ')');
+      existingWrapper.remove();
     }
 
     const ext = getExtension(filename);
@@ -719,6 +731,16 @@
       // 既存のサムネイル要素をすべて削除（古いprefixの画像が残る問題対策）
       document.querySelectorAll('.e2c-thumb-wrapper').forEach(el => el.remove());
       setTimeout(processAllRows, 1000);
+    }
+  }, 2000);
+
+  // 仮想スクロール定期チェック: 2秒ごとに全行のサムネイル一致確認
+  // cdk-virtual-scroll-viewport は DOM 行を再利用するため、イベント検出が困難
+  // processRow 内の img.alt === filename 照合により、正しい行は即座にスキップされる
+  setInterval(() => {
+    if (s3Ready) {
+      processedRows = new WeakSet();
+      processAllRows();
     }
   }, 2000);
 
