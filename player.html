@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IDrive e2 Video Player</title>
+  <link rel="stylesheet" href="player.css">
+</head>
+<body>
+  <!-- タイトルバー（ドラッグ可能） -->
+  <div id="titlebar">
+    <div id="titlebar-left">
+      <span id="filetype-icon">🎬</span>
+      <span id="titlebar-filename">-</span>
+    </div>
+    <button id="closeBtn" title="閉じる (Esc)">✕</button>
+  </div>
+
+  <!-- 動画コンテナ -->
+  <div id="player-container">
+    <video id="videoPlayer" controls autoplay preload="auto"></video>
+    <div id="loading-overlay" class="hidden">
+      <div id="spinner"></div>
+      <span id="loading-text">読み込み中...</span>
+    </div>
+    <div id="error-overlay" class="hidden">
+      <span id="error-icon">⚠️</span>
+      <span id="error-text">動画を読み込めませんでした</span>
+      <button id="retryBtn">再試行</button>
+    </div>
+  </div>
+
+  <!-- コントロールバー -->
+  <div id="controls">
+    <button id="prevFolderBtn" class="ctrl-btn" title="前のフォルダ" disabled>⏮</button>
+    <button id="prevBtn" class="ctrl-btn" title="前の動画 (←)" disabled>◀</button>
+
+    <span id="position">- / -</span>
+
+    <span id="filenameDisplay" title="">-</span>
+
+    <button id="nextBtn" class="ctrl-btn" title="次の動画 (→)" disabled>▶</button>
+    <button id="nextFolderBtn" class="ctrl-btn" title="次のフォルダ" disabled>⏭</button>
+
+    <div id="controls-right">
+      <button id="playlistToggle" class="ctrl-btn" title="プレイリスト (P)">🗂️</button>
+    </div>
+  </div>
+
+  <!-- プレイリストパネル -->
+  <div id="playlistPanel" class="hidden">
+    <ul id="playlist"></ul>
+    <div id="playlist-empty" class="hidden">動画がありません</div>
+  </div>
+
+  <script src="player.js"></script>
+</body>
+</html>

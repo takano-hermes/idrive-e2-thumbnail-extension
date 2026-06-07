@@ -17,6 +17,7 @@
     playButtonEmoji: '▶',
     defaults: {
       clickAction: 'overlay',
+      videoClickAction: 'popup',
       thumbSize: 40,
       accessKeyId: '',
       secretAccessKey: '',
@@ -325,9 +326,34 @@
       // 仮想スクロール対策: クリック時にDOMから現在のファイル名を再取得
       const row = wrapper.closest('.e2c-tb-rw');
       const currentFilename = row ? getFilename(row) : filename;
+
+      // --- 動画: ポップアップビューアー or 新規タブ ---
+      if (isVideo) {
+        if (settings.videoClickAction === 'popup') {
+          // 動画一覧を構築して Service Worker 経由でポップアップを開く
+          const videoList = buildFileList().filter(item => item.isVideo);
+          const vIdx = videoList.findIndex(
+            item => item.filename === currentFilename && item.bucket === bucket
+          );
+          chrome.runtime.sendMessage({
+            type: 'PLAY_VIDEO',
+            payload: {
+              fileList: videoList,
+              currentIndex: vIdx >= 0 ? vIdx : 0,
+              currentPrefix: prefix || '',
+              parentPrefix: getParentPrefix(prefix || ''),
+            }
+          });
+          return;
+        }
+        // 'newtab' の場合は後続の共通処理へ
+      }
+
+      // --- 画像 または 動画(newtab): PresignedURL取得 → 表示 ---
       const objKey = (prefix || '') + currentFilename;
       const url = await getPresignedUrl(bucket, objKey, region);
       if (!url) return;
+
       if (settings.clickAction === 'newtab') {
         window.open(url, '_blank');
       } else {
@@ -761,6 +787,33 @@
         presignedUrlCache = new Map();
         processAllRows();
       });
+    }
+  });
+
+  // ============================================================
+  // Service Worker からのメッセージ受信（ポップアップビューアーからの委譲）
+  // ============================================================
+  chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    switch (msg.type) {
+
+      case 'GET_PRESIGNED_URL': {
+        const { bucket, key, region } = msg.payload;
+        getPresignedUrl(bucket, key, region).then(url => {
+          sendResponse({ type: 'PRESIGNED_URL', payload: { url } });
+        });
+        return true; // async
+      }
+
+      case 'LIST_OBJECTS': {
+        const { bucket, prefix, region } = msg.payload;
+        fetchFolderSiblings(bucket, region, prefix).then(prefixes => {
+          sendResponse({ type: 'LIST_OBJECTS_RESULT', payload: { prefixes } });
+        });
+        return true; // async
+      }
+
+      default:
+        return false;
     }
   });
 

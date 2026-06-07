@@ -1,11 +1,14 @@
 {
   "manifest_version": 3,
   "name": "IDrive e2 サムネイルビューアー",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "IDrive e2 バケットビューアーに画像・動画のサムネイルを表示するChrome拡張（S3 API直接アクセス）",
   "permissions": [
     "storage"
   ],
+  "background": {
+    "service_worker": "service_worker.js"
+  },
   "host_permissions": [
     "https://console.idrivee2.com/*",
     "https://*.idrivee2.com/*",
