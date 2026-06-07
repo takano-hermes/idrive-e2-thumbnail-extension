@@ -696,6 +696,16 @@
     observer = new MutationObserver(() => processAllRows());
     observer.observe(target, { childList: true, subtree: true });
     processAllRows();
+
+    // 仮想スクロール対策: スクロール時にサムネイルの再チェック
+    const scrollTarget = target.tagName === 'CDK-VIRTUAL-SCROLL-VIEWPORT' ? target : target.querySelector('cdk-virtual-scroll-viewport');
+    if (scrollTarget) {
+      let scrollTimeout;
+      scrollTarget.addEventListener('scroll', () => {
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(processAllRows, 300);
+      }, { passive: true });
+    }
   }
 
   // ============================================================
