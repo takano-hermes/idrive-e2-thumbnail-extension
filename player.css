@@ -1,0 +1,298 @@
+/* IDrive e2 Video Player Styles v1.0 */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #111;
+  color: #ccc;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  overflow: hidden;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+}
+
+/* ========== タイトルバー ========== */
+#titlebar {
+  height: 38px;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  background: #1e1e1e;
+  border-bottom: 1px solid #333;
+  -webkit-app-region: drag;
+}
+
+#titlebar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+#filetype-icon {
+  font-size: 16px;
+}
+
+#titlebar-filename {
+  font-size: 13px;
+  color: #aaa;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 350px;
+}
+
+#closeBtn {
+  -webkit-app-region: no-drag;
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+#closeBtn:hover {
+  color: #fff;
+  background: rgba(255,255,255,0.1);
+}
+
+/* ========== 動画コンテナ ========== */
+#player-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: #000;
+  overflow: hidden;
+}
+
+#videoPlayer {
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+}
+
+/* ローディングオーバーレイ */
+#loading-overlay,
+#error-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgba(0,0,0,0.7);
+  transition: opacity 0.2s ease;
+}
+
+#loading-overlay.hidden,
+#error-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #333;
+  border-top-color: #1976d2;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+#loading-text {
+  font-size: 13px;
+  color: #888;
+}
+
+#error-icon {
+  font-size: 32px;
+}
+
+#error-text {
+  font-size: 14px;
+  color: #e57373;
+}
+
+#retryBtn {
+  margin-top: 8px;
+  padding: 6px 20px;
+  background: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+#retryBtn:hover {
+  background: #1565c0;
+}
+
+/* ========== コントロールバー ========== */
+#controls {
+  height: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  background: #1e1e1e;
+  border-top: 1px solid #333;
+}
+
+.ctrl-btn {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #ccc;
+  font-size: 15px;
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 4px 10px;
+  min-width: 34px;
+  text-align: center;
+  transition: background 0.15s, border-color 0.15s;
+  line-height: 1.3;
+}
+
+.ctrl-btn:hover:not(:disabled) {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.4);
+  color: #fff;
+}
+
+.ctrl-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+#position {
+  font-size: 12px;
+  color: #888;
+  min-width: 55px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+#filenameDisplay {
+  font-size: 13px;
+  color: #999;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 8px;
+}
+
+#controls-right {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+}
+
+/* ========== プレイリストパネル ========== */
+#playlistPanel {
+  position: absolute;
+  bottom: 44px;
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  background: rgba(30,30,30,0.97);
+  border-top: 1px solid #333;
+  transition: max-height 0.2s ease, opacity 0.2s ease;
+  z-index: 10;
+}
+
+#playlistPanel.hidden {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  border-top: none;
+}
+
+#playlist {
+  list-style: none;
+  padding: 4px 0;
+}
+
+#playlist li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #aaa;
+  transition: background 0.1s;
+}
+
+#playlist li:hover {
+  background: rgba(255,255,255,0.06);
+  color: #eee;
+}
+
+#playlist li.active {
+  color: #64b5f6;
+  font-weight: 600;
+  background: rgba(100,181,246,0.08);
+}
+
+#playlist li .pl-index {
+  font-size: 11px;
+  color: #666;
+  min-width: 28px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#playlist li .pl-filename {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#playlist-empty {
+  text-align: center;
+  padding: 16px;
+  font-size: 13px;
+  color: #666;
+}
+
+/* ========== スクロールバー ========== */
+#playlistPanel::-webkit-scrollbar {
+  width: 6px;
+}
+
+#playlistPanel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#playlistPanel::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 3px;
+}
+
+/* ========== 再生中動画の枠線（オプション） ========== */
+#videoPlayer:focus {
+  outline: none;
+}

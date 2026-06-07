@@ -17,6 +17,7 @@
     playButtonEmoji: '▶',
     defaults: {
       clickAction: 'overlay',
+      videoClickAction: 'popup',
       thumbSize: 40,
       accessKeyId: '',
       secretAccessKey: '',
@@ -325,9 +326,34 @@
       // 仮想スクロール対策: クリック時にDOMから現在のファイル名を再取得
       const row = wrapper.closest('.e2c-tb-rw');
       const currentFilename = row ? getFilename(row) : filename;
+
+      // --- 動画: ポップアップビューアー or 新規タブ ---
+      if (isVideo) {
+        if (settings.videoClickAction === 'popup') {
+          // 動画一覧を構築して Service Worker 経由でポップアップを開く
+          const videoList = buildFileList().filter(item => item.isVideo);
+          const vIdx = videoList.findIndex(
+            item => item.filename === currentFilename && item.bucket === bucket
+          );
+          chrome.runtime.sendMessage({
+            type: 'PLAY_VIDEO',
+            payload: {
+              fileList: videoList,
+              currentIndex: vIdx >= 0 ? vIdx : 0,
+              currentPrefix: prefix || '',
+              parentPrefix: getParentPrefix(prefix || ''),
+            }
+          });
+          return;
+        }
+        // 'newtab' の場合は後続の共通処理へ
+      }
+
+      // --- 画像 または 動画(newtab): PresignedURL取得 → 表示 ---
       const objKey = (prefix || '') + currentFilename;
       const url = await getPresignedUrl(bucket, objKey, region);
       if (!url) return;
+
       if (settings.clickAction === 'newtab') {
         window.open(url, '_blank');
       } else {
@@ -696,6 +722,16 @@
     observer = new MutationObserver(() => processAllRows());
     observer.observe(target, { childList: true, subtree: true });
     processAllRows();
+
+    // 仮想スクロール対策: スクロール時にサムネイルの再チェック
+    const scrollTarget = target.tagName === 'CDK-VIRTUAL-SCROLL-VIEWPORT' ? target : target.querySelector('cdk-virtual-scroll-viewport');
+    if (scrollTarget) {
+      let scrollTimeout;
+      scrollTarget.addEventListener('scroll', () => {
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(processAllRows, 300);
+      }, { passive: true });
+    }
   }
 
   // ============================================================
@@ -751,6 +787,40 @@
         presignedUrlCache = new Map();
         processAllRows();
       });
+    }
+  });
+
+  // ============================================================
+  // Service Worker からのメッセージ受信（ポップアップビューアーからの委譲）
+  // ============================================================
+  chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    switch (msg.type) {
+
+      case 'GET_PRESIGNED_URL': {
+        const { bucket, key, region } = msg.payload;
+        log('GET_PRESIGNED_URL: bucket=', bucket, 'key=', key, 'region=', region, 's3Ready=', s3Ready);
+        getPresignedUrl(bucket, key, region).then(url => {
+          log('GET_PRESIGNED_URL RESULT: url=', url ? url.slice(0, 60) + '...' : 'null');
+          sendResponse({ type: 'PRESIGNED_URL', payload: { url } });
+        }).catch(err => {
+          log('GET_PRESIGNED_URL ERROR:', err.message);
+          sendResponse({ type: 'PRESIGNED_URL', payload: { url: null } });
+        });
+        return true; // async
+      }
+
+      case 'LIST_OBJECTS': {
+        const { bucket, prefix, region } = msg.payload;
+        log('LIST_OBJECTS: bucket=', bucket, 'prefix=', prefix, 'region=', region);
+        fetchFolderSiblings(bucket, region, prefix).then(prefixes => {
+          log('LIST_OBJECTS RESULT: prefixes=', prefixes);
+          sendResponse({ type: 'LIST_OBJECTS_RESULT', payload: { prefixes } });
+        });
+        return true; // async
+      }
+
+      default:
+        return false;
     }
   });
 

@@ -2,6 +2,7 @@
 (function() {
   const DEFAULTS = {
     clickAction: 'overlay',
+    videoClickAction: 'popup',
     thumbSize: 40,
     accessKeyId: '',
     secretAccessKey: '',
@@ -15,6 +16,7 @@
       document.getElementById('secretAccessKey').value = result.secretAccessKey || '';
       document.getElementById('s3Region').value = result.s3Region || 'ap-northeast-1';
       document.getElementById('clickAction').value = result.clickAction;
+      document.getElementById('videoClickAction').value = result.videoClickAction || 'popup';
       document.getElementById('thumbSize').value = result.thumbSize;
     } catch (e) {}
   }
@@ -25,6 +27,7 @@
       secretAccessKey: document.getElementById('secretAccessKey').value.trim(),
       s3Region: document.getElementById('s3Region').value,
       clickAction: document.getElementById('clickAction').value,
+      videoClickAction: document.getElementById('videoClickAction').value,
       thumbSize: parseInt(document.getElementById('thumbSize').value, 10) || 40,
     };
 
