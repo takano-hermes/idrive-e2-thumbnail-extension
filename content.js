@@ -104,6 +104,27 @@
     return filename.slice(dotIdx).toLowerCase();
   }
 
+  /**
+   * 現在のテーブル行から画像/動画ファイル一覧を構築
+   * @returns {Array<{filename:string, ext:string, isVideo:boolean, bucket:string, key:string, region:string}>}
+   */
+  function buildFileList() {
+    const { region, bucket, prefix } = parseURL();
+    const rows = document.querySelectorAll('div.e2c-tb-rw');
+    const list = [];
+    rows.forEach(row => {
+      const filename = getFilename(row);
+      if (!filename) return;
+      const ext = getExtension(filename);
+      const isImage = CONFIG.imageExts.has(ext);
+      const isVideo = CONFIG.videoExts.has(ext);
+      if (!isImage && !isVideo) return;
+      const fullKey = (prefix || '') + filename;
+      list.push({ filename, ext, isVideo, bucket, key: fullKey, region });
+    });
+    return list;
+  }
+
   // ============================================================
   // PreSignedURL 生成（SigV4）
   // ============================================================
