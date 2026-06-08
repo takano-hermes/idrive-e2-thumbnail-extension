@@ -31,9 +31,15 @@
   animation: e2c-fade-in 0.2s ease;
 }
 
-/* ★★★ 元のアイコンを非表示にするクラス（processRow 内で動的に付与） ★★★ */
-.e2c-icon-cell-hidden {
+/* ★★★ ファイル種別アイコンの画像部分のみ非表示（テキストは残す） ★★★ */
+.e2c-sts-image.e2c-icon-image-hidden {
+  background-image: none !important;
+  background: none !important;
+}
+.e2c-sts-image.e2c-icon-image-hidden::before,
+.e2c-sts-image.e2c-icon-image-hidden::after {
   display: none !important;
+  content: none !important;
 }
 
 @keyframes e2c-fade-in {

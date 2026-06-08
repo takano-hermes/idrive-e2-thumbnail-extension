@@ -801,7 +801,7 @@
     if (!isImage && !isVideo) {
       // stale thumbnail削除後にアイコンが非表示のままにならないよう復元
       if (existingWrapper && iconEl) {
-        iconEl.classList.remove('e2c-icon-cell-hidden');
+        iconEl.classList.remove('e2c-icon-image-hidden');
       }
       log('processRow: SKIP - not image/video');
       return;
@@ -813,8 +813,8 @@
     const thumbEl = createThumbnailElement(filename, ext, isVideo, bucket, prefix, region);
 
     if (iconEl && nameCell) {
-      // 元のアイコンを非表示にし、サムネイルをファイル名列の直前に挿入
-      iconEl.classList.add('e2c-icon-cell-hidden');
+      // 元のアイコン画像を非表示（テキストは残す）、サムネイルをファイル名列の直前に挿入
+      iconEl.classList.add('e2c-icon-image-hidden');
       row.insertBefore(thumbEl, nameCell);
     } else {
       // フォールバック: e2c-os-name が見つからない場合
