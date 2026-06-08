@@ -741,25 +741,27 @@
   // ============================================================
 
   /**
-   * 行内の元のファイル種別アイコンセルを特定する
-   * IDrive e2 の行構造:
-   *   div.e2c-check-container
-   *   div.e2c-td           ← これが元のアイコンセル（クラス名は e2c-td のみ、特定の識別子なし）
-   *   div.e2c-os-name
+   * 行内のファイル名列 (e2c-os-name) 内のアイコン要素を特定する
+   * IDrive e2 の行構造（実際のDOM検証で確認）:
+   *   div.e2c-check-container               — チェックボックス
+   *   div.e2c-td.e2c-os-name                 — ファイル名列
+   *     span.e2c-sts-image                   ← これがファイル種別アイコン
+   *     (ファイル名テキスト)
+   *   div.e2c-td.e2c-os-size                 — サイズ列
+   *   div.e2c-td.e2c-os-mdf                  — 更新日列
+   *   div.e2c-td.e2c-ut-action               — アクション列
+   *
+   * ※独立したアイコンセルは存在しない。アイコンは e2c-os-name 内の span 要素。
    *
    * @param {Element} row - div.e2c-tb-rw 要素
-   * @returns {Element|null} 元のアイコンセル要素、見つからない場合は null
+   * @returns {{iconEl: Element|null, nameCell: Element|null}} アイコン要素とファイル名セル
    */
-  function findOrigIconCell(row) {
-    const cells = row.querySelectorAll(':scope > div');
-    for (const cell of cells) {
-      if (cell.classList.contains('e2c-thumb-wrapper')) continue;
-      if (cell.classList.contains('e2c-check-container')) continue;
-      if (cell.classList.contains('e2c-os-name')) continue;
-      if (!cell.classList.contains('e2c-td')) continue;
-      return cell;
-    }
-    return null;
+  function findOrigIconElements(row) {
+    const nameCell = row.querySelector('div.e2c-os-name');
+    if (!nameCell) return { iconEl: null, nameCell: null };
+    // e2c-os-name 内の最初の span 要素がアイコン（e2c-sts-image クラスを持つ）
+    const iconEl = nameCell.querySelector('span.e2c-sts-image');
+    return { iconEl, nameCell };
   }
 
   function processRow(row) {
@@ -793,13 +795,13 @@
     const isVideo = CONFIG.videoExts.has(ext);
     log('processRow: ext=', ext, 'isImage=', isImage, 'isVideo=', isVideo);
 
-    // 元のアイコンセルを1回だけ取得（stale復元と新規挿入で使い回す）
-    const origIconCell = findOrigIconCell(row);
+    // ファイル名列とアイコン要素を取得（stale復元と新規挿入で使い回す）
+    const { iconEl, nameCell } = findOrigIconElements(row);
 
     if (!isImage && !isVideo) {
-      // stale thumbnail削除後にorigIconCellが非表示のままにならないよう復元
-      if (existingWrapper && origIconCell) {
-        origIconCell.classList.remove('e2c-icon-cell-hidden');
+      // stale thumbnail削除後にアイコンが非表示のままにならないよう復元
+      if (existingWrapper && iconEl) {
+        iconEl.classList.remove('e2c-icon-cell-hidden');
       }
       log('processRow: SKIP - not image/video');
       return;
@@ -810,12 +812,13 @@
     const { region, bucket, prefix } = parseURL();
     const thumbEl = createThumbnailElement(filename, ext, isVideo, bucket, prefix, region);
 
-    if (origIconCell) {
-      // 元のアイコンを非表示にし、その位置にサムネイルwrapperを挿入
-      origIconCell.classList.add('e2c-icon-cell-hidden');
-      row.insertBefore(thumbEl, origIconCell);
+    if (iconEl && nameCell) {
+      // 元のアイコンを非表示にし、サムネイルをファイル名列の直前に挿入
+      iconEl.classList.add('e2c-icon-cell-hidden');
+      row.insertBefore(thumbEl, nameCell);
     } else {
-      // フォールバック: 元のアイコンセルが見つからない場合
+      // フォールバック: e2c-os-name が見つからない場合
+      log('processRow: WARN - e2c-os-name not found, using fallback position');
       const checkContainer = row.querySelector('.e2c-check-container');
       if (checkContainer && checkContainer.nextSibling) {
         row.insertBefore(thumbEl, checkContainer.nextSibling);
