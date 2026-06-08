@@ -745,7 +745,7 @@
    * IDrive e2 の行構造（実際のDOM検証で確認）:
    *   div.e2c-check-container               — チェックボックス
    *   div.e2c-td.e2c-os-name                 — ファイル名列
-   *     span.e2c-sts-image                   ← これがファイル種別アイコン
+   *     span.e2c-sts-image/e2c-sts-video     ← これがファイル種別アイコン（クラス名はファイル種別により異なる）
    *     (ファイル名テキスト)
    *   div.e2c-td.e2c-os-size                 — サイズ列
    *   div.e2c-td.e2c-os-mdf                  — 更新日列
@@ -759,8 +759,8 @@
   function findOrigIconElements(row) {
     const nameCell = row.querySelector('div.e2c-os-name');
     if (!nameCell) return { iconEl: null, nameCell: null };
-    // e2c-os-name 内の最初の span 要素がアイコン（e2c-sts-image クラスを持つ）
-    const iconEl = nameCell.querySelector('span.e2c-sts-image');
+    // e2c-os-name 内のアイコン要素（ファイル種別によって e2c-sts-image / e2c-sts-video 等）
+    const iconEl = nameCell.querySelector('[class^="e2c-sts-"]');
     return { iconEl, nameCell };
   }
 
