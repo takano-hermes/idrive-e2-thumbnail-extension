@@ -739,6 +739,28 @@
   // ============================================================
   // 行処理
   // ============================================================
+
+  /**
+   * 行内の元のファイル種別アイコンセルを特定する
+   * IDrive e2 の行構造:
+   *   div.e2c-check-container
+   *   div.e2c-td           ← これが元のアイコンセル（クラス名は e2c-td のみ、特定の識別子なし）
+   *   div.e2c-os-name
+   *
+   * @param {Element} row - div.e2c-tb-rw 要素
+   * @returns {Element|null} 元のアイコンセル要素、見つからない場合は null
+   */
+  function findOrigIconCell(row) {
+    const cells = row.querySelectorAll(':scope > div.e2c-td');
+    for (const cell of cells) {
+      if (cell.classList.contains('e2c-thumb-wrapper')) continue;
+      if (cell.classList.contains('e2c-check-container')) continue;
+      if (cell.classList.contains('e2c-os-name')) continue;
+      return cell;
+    }
+    return null;
+  }
+
   function processRow(row) {
     if (processedRows.has(row)) {
       log('processRow: SKIP - already processed');
@@ -769,7 +791,15 @@
     const isImage = CONFIG.imageExts.has(ext);
     const isVideo = CONFIG.videoExts.has(ext);
     log('processRow: ext=', ext, 'isImage=', isImage, 'isVideo=', isVideo);
+
+    // 元のアイコンセルを1回だけ取得（stale復元と新規挿入で使い回す）
+    const origIconCell = findOrigIconCell(row);
+
     if (!isImage && !isVideo) {
+      // stale thumbnail削除後にorigIconCellが非表示のままにならないよう復元
+      if (existingWrapper && origIconCell) {
+        origIconCell.style.display = '';
+      }
       log('processRow: SKIP - not image/video');
       return;
     }
@@ -779,11 +809,18 @@
     const { region, bucket, prefix } = parseURL();
     const thumbEl = createThumbnailElement(filename, ext, isVideo, bucket, prefix, region);
 
-    const checkContainer = row.querySelector('.e2c-check-container');
-    if (checkContainer && checkContainer.nextSibling) {
-      row.insertBefore(thumbEl, checkContainer.nextSibling);
+    if (origIconCell) {
+      // 元のアイコンを非表示にし、その位置にサムネイルwrapperを挿入
+      origIconCell.style.display = 'none';
+      row.insertBefore(thumbEl, origIconCell);
     } else {
-      row.insertBefore(thumbEl, row.firstChild);
+      // フォールバック: 元のアイコンセルが見つからない場合
+      const checkContainer = row.querySelector('.e2c-check-container');
+      if (checkContainer && checkContainer.nextSibling) {
+        row.insertBefore(thumbEl, checkContainer.nextSibling);
+      } else {
+        row.insertBefore(thumbEl, row.firstChild);
+      }
     }
   }
 

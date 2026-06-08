@@ -31,6 +31,11 @@
   animation: e2c-fade-in 0.2s ease;
 }
 
+/* ★★★ 元のアイコンを非表示にするクラス（processRow 内で動的に付与） ★★★ */
+.e2c-icon-cell-hidden {
+  display: none !important;
+}
+
 @keyframes e2c-fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
