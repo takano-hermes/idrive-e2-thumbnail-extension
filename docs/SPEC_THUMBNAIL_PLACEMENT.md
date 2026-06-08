@@ -459,39 +459,31 @@ if (existingWrapper) {
   }
 }
 ```
-**設計判断**: stale 検出時に元のアイコンセルを必ず復元する（`display=''`）。これにより：
+**設計判断**: 
 
-1. **画像/動画ファイル → 画像/動画ファイル**: 復元後、後続処理で再度 `findOrigIconCell` → `display='none'` 設定。表示上は一瞬の変化だが実用上問題ない
-2. **画像/動画ファイル → 非画像・非動画ファイル**: 復元された元のアイコンがそのまま表示される（正常）
-3. **`findOrigIconCell` が2回呼ばれる問題**: 一度目の呼び出し（stale処理内）と二度目の呼び出し（新規サムネイル挿入処理内）で重複が発生する。以下の最適化も可能：
-
-```javascript
-// ★★★ 最適化版: 1度だけ origIconCell を取得 ★★★
-const existingWrapper = row.querySelector('.e2c-thumb-wrapper');
-if (existingWrapper) {
-  const img = existingWrapper.querySelector('img');
-  if (img && img.alt === filename) return;
-  existingWrapper.remove();
-}
-
-const origIconCell = findOrigIconCell(row);
-
-if (!isImage && !isVideo) {
-  // origIconCell は既存のまま（表示状態は初期状態）
-  return;
-}
-
-if (origIconCell) {
-  origIconCell.style.display = 'none';
-  row.insertBefore(thumbEl, origIconCell);
-} else {
-  // フォールバック
-  const checkContainer = row.querySelector('.e2c-check-container');
-  row.insertBefore(thumbEl, checkContainer ? checkContainer.nextSibling : row.firstChild);
-}
+**IDrive e2 の実際のDOM構造（Issue #35 コメントの検証で確認）**:
+```html
+<div class="e2c-tb-rw">
+  <div class="e2c-check-container">...</div>
+  <div class="e2c-td e2c-os-name">         ← ファイル名列
+    <span class="e2c-sts-image">...</span>  ← これがファイル種別アイコン！
+    (ファイル名テキスト)
+  </div>
+  <div class="e2c-td e2c-os-size">...</div> ← サイズ列（独立したセル）
+  <div class="e2c-td e2c-os-mdf">...</div>
+  <div class="e2c-td e2c-ut-action">...</div>
+</div>
 ```
 
-**推奨**: 最初の実装では理解しやすさを優先し、stale 処理内で明示的に復元するシンプルな方式を採用する。後日のリファクタリングで最適化版に切り替えてもよい。
+**当初の誤った前提**: IDrive e2 の行に「元のアイコンセル」という独立したセルが存在すると仮定していた。
+**実際**: 独立したアイコンセルは存在しない。ファイル種別アイコンは `e2c-os-name` セル内の `span.e2c-sts-image` 要素。
+
+**正しいアプローチ**:
+- `span.e2c-sts-image` を `display:none` で非表示にする
+- サムネイルwrapperを `e2c-os-name` セルの直前に `insertBefore` で挿入
+- これによりサムネイルがファイル名の左側（元のアイコンがあった位置）に表示される
+
+stale 検出時も `e2c-sts-image` の `display` を復元する（非画像・非動画ファイルへの切り替え対策）。
 
 ### 5.5 SPA 遷移対応（line 847-858）
 
