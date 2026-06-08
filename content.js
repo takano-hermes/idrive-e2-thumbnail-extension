@@ -799,8 +799,10 @@
     const { iconEl, nameCell } = findOrigIconElements(row);
 
     if (!isImage && !isVideo) {
-      // stale thumbnail削除後にアイコンが非表示のままにならないよう復元
-      if (existingWrapper && iconEl) {
+      // ★★★ 常にアイコン非表示クラスを削除 ★★★
+      // SPA遷移後やフォルダ変更時は全wrapperが削除済みで existingWrapper が null でも
+      // 以前画像/動画だった行の e2c-icon-image-hidden が残っている可能性がある
+      if (iconEl) {
         iconEl.classList.remove('e2c-icon-image-hidden');
       }
       log('processRow: SKIP - not image/video');
