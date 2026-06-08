@@ -751,11 +751,12 @@
    * @returns {Element|null} 元のアイコンセル要素、見つからない場合は null
    */
   function findOrigIconCell(row) {
-    const cells = row.querySelectorAll(':scope > div.e2c-td');
+    const cells = row.querySelectorAll(':scope > div');
     for (const cell of cells) {
       if (cell.classList.contains('e2c-thumb-wrapper')) continue;
       if (cell.classList.contains('e2c-check-container')) continue;
       if (cell.classList.contains('e2c-os-name')) continue;
+      if (!cell.classList.contains('e2c-td')) continue;
       return cell;
     }
     return null;
@@ -798,7 +799,7 @@
     if (!isImage && !isVideo) {
       // stale thumbnail削除後にorigIconCellが非表示のままにならないよう復元
       if (existingWrapper && origIconCell) {
-        origIconCell.style.display = '';
+        origIconCell.classList.remove('e2c-icon-cell-hidden');
       }
       log('processRow: SKIP - not image/video');
       return;
@@ -811,7 +812,7 @@
 
     if (origIconCell) {
       // 元のアイコンを非表示にし、その位置にサムネイルwrapperを挿入
-      origIconCell.style.display = 'none';
+      origIconCell.classList.add('e2c-icon-cell-hidden');
       row.insertBefore(thumbEl, origIconCell);
     } else {
       // フォールバック: 元のアイコンセルが見つからない場合
