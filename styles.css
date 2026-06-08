@@ -31,6 +31,23 @@
   animation: e2c-fade-in 0.2s ease;
 }
 
+/* ★★★ ファイル種別アイコンの画像部分のみ非表示（テキストは残す） ★★★ */
+.e2c-icon-image-hidden {
+  background-image: none !important;
+  background: none !important;
+  padding: 0 !important;
+  min-width: 0 !important;
+  width: auto !important;
+  height: auto !important;
+}
+.e2c-icon-image-hidden::before,
+.e2c-icon-image-hidden::after {
+  display: none !important;
+  content: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
 @keyframes e2c-fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
