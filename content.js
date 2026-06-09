@@ -792,10 +792,10 @@
         }
         log('processRow: REMOVE stale thumbnail (was', img?.alt, ', now', filename + ')');
         existingWrapper.remove();
-      } else {
-        log('processRow: SKIP - data-e2c-processed, no wrapper needed', filename);
-        return;
       }
+      // ★★★ wrapperがない場合はフォールスルー（再作成）★★★
+      // URL変更時のクリーンアップ等でwrapperが削除された場合でも、
+      // data属性が残っていればここに到達。スキップせず再作成に進む（Issue #55）
     }
 
     // 仮想スクロール対応: 既存のサムネイルが正しいファイル名かを確認
