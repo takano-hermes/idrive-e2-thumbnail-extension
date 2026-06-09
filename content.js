@@ -718,6 +718,8 @@
       url.searchParams.delete('prefix');
     }
     window.history.pushState({}, '', url.toString());
+    // data-e2c-processed 属性もクリア
+    document.querySelectorAll('.e2c-tb-rw').forEach(row => row.removeAttribute('data-e2c-processed'));
     processedRows = new WeakSet();
     setTimeout(processAllRows, 500);
   }
@@ -760,22 +762,40 @@
     const nameCell = row.querySelector('div.e2c-os-name');
     if (!nameCell) return { iconEl: null, nameCell: null };
     // e2c-os-name 内のアイコン要素（ファイル種別によって e2c-sts-image / e2c-sts-video 等）
+    // [class*=" e2c-sts-"] で e2c-icon-image-hidden が先頭にある場合もマッチ（Issue #52）
     const iconEl = nameCell.querySelector('[class*=" e2c-sts-"], [class^="e2c-sts-"]');
     return { iconEl, nameCell };
   }
 
   function processRow(row) {
-    if (processedRows.has(row)) {
-      log('processRow: SKIP - already processed');
-      return;
-    }
-    processedRows.add(row);
-
+    // ★★★ data-e2c-processed 属性で処理済みチェック ★★★（Issue #55）
+    // WeakSet（メモリ参照）ではなくDOM属性にファイル名を永続記録することで、
+    // 2秒間隔の定期チェックでも発振しない。仮想スクロールで行が再利用されると
+    // 属性も消えるため、新しいファイルは自動で再処理される。
+    const processedFilename = row.getAttribute('data-e2c-processed');
     const filename = getFilename(row);
     log('processRow: filename?', filename);
     if (!filename) {
       log('processRow: filename is null/empty, row HTML:', row.innerHTML.slice(0, 200));
+      row.removeAttribute('data-e2c-processed');
       return;
+    }
+
+    if (processedFilename === filename) {
+      // すでに同じファイル名で処理済み → 既存wrapperとaltを確認してスキップ
+      const existingWrapper = row.querySelector('.e2c-thumb-wrapper');
+      if (existingWrapper) {
+        const img = existingWrapper.querySelector('img');
+        if (img && img.alt === filename) {
+          log('processRow: SKIP - data-e2c-processed matches', filename);
+          return;
+        }
+        log('processRow: REMOVE stale thumbnail (was', img?.alt, ', now', filename + ')');
+        existingWrapper.remove();
+      } else {
+        log('processRow: SKIP - data-e2c-processed, no wrapper needed', filename);
+        return;
+      }
     }
 
     // 仮想スクロール対応: 既存のサムネイルが正しいファイル名かを確認
@@ -928,6 +948,8 @@
         row.insertBefore(thumbEl, row.firstChild);
       }
     }
+    // ★★★ 処理済みマーカーを設定 ★★★（Issue #55）
+    row.setAttribute('data-e2c-processed', filename);
   }
 
   function processAllRows() {
@@ -996,16 +1018,16 @@
       presignedUrlCache = new Map();
       // 既存のサムネイル要素をすべて削除（古いprefixの画像が残る問題対策）
       document.querySelectorAll('.e2c-thumb-wrapper').forEach(el => el.remove());
+      // data-e2c-processed もクリア（新しいprefixの行が古いdata属性を持たないように）
+      document.querySelectorAll('.e2c-tb-rw').forEach(row => row.removeAttribute('data-e2c-processed'));
       setTimeout(processAllRows, 1000);
     }
   }, 2000);
 
-  // 仮想スクロール定期チェック: 2秒ごとに全行のサムネイル一致確認
-  // cdk-virtual-scroll-viewport は DOM 行を再利用するため、イベント検出が困難
-  // processRow 内の img.alt === filename 照合により、正しい行は即座にスキップされる
+  // 仮想スクロール定期チェック: 2秒ごとに全行の処理状態確認
+  // data-e2c-processed 属性がガードを担当するため、WeakSetリセットは不要（Issue #55）
   setInterval(() => {
     if (s3Ready) {
-      processedRows = new WeakSet();
       processAllRows();
     }
   }, 2000);
