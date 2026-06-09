@@ -50,8 +50,12 @@
   height: auto !important;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
   line-height: normal !important;
   max-height: 1.5em !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
   overflow: hidden !important;
 }
 .e2c-icon-image-hidden::before,

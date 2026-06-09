@@ -846,6 +846,20 @@
       if (oldFlex && oldFlex.parentNode === nameCell) {
         oldFlex.remove();
       }
+
+      // ★★★ Issue #42: セル高さを行に一致させる ★★★
+      // CDK Virtual Scroll が行に固定高さを設定している一方、
+      // アイコンspanの元CSSがセルを押し広げることがある（例: セル82px > 行60px）。
+      // 行の設定高さ（または実測値）を取得し、セルを同じ高さに制限する。
+      // parseInt(row.style.height) を優先: CDKのインラインスタイル値を直接読み、
+      // offsetHeight（border含む）の誤差を回避する。
+      const rowHeight = parseInt(row.style.height) || row.offsetHeight;
+      if (rowHeight > 0) {
+        nameCell.style.height = rowHeight + 'px';
+        nameCell.style.maxHeight = rowHeight + 'px';
+        nameCell.style.overflow = 'hidden';
+        nameCell.style.boxSizing = 'border-box';
+      }
     } else {
       // フォールバック: e2c-os-name が見つからない場合
       log('processRow: WARN - e2c-os-name not found, using fallback position');
