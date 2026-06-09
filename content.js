@@ -760,7 +760,7 @@
     const nameCell = row.querySelector('div.e2c-os-name');
     if (!nameCell) return { iconEl: null, nameCell: null };
     // e2c-os-name 内のアイコン要素（ファイル種別によって e2c-sts-image / e2c-sts-video 等）
-    const iconEl = nameCell.querySelector('[class^="e2c-sts-"]');
+    const iconEl = nameCell.querySelector('[class*=" e2c-sts-"], [class^="e2c-sts-"]');
     return { iconEl, nameCell };
   }
 
@@ -802,6 +802,8 @@
     // IDrive e2 の .ts フォルダ（サムネイル格納用）は拡張子が .ts で
     // videoExts にマッチするが、フォルダなので処理しない（Issue #41）
     if (iconEl && iconEl.classList.contains('e2c-sts-folder')) {
+      // 以前画像行だった場合に付与された e2c-icon-image-hidden を除去
+      iconEl.classList.remove('e2c-icon-image-hidden');
       // 以前の処理で nameCell に設定したスタイルをクリーンアップ
       if (nameCell) {
         nameCell.style.display = '';
@@ -897,6 +899,28 @@
     } else {
       // フォールバック: e2c-os-name が見つからない場合
       log('processRow: WARN - e2c-os-name not found, using fallback position');
+      // ★★★ スタイルクリーンアップ（Issue #52）★★★
+      // iconEl が見つからない場合でも、以前設定したスタイルが
+      // 行の e2c-os-name に残っている可能性がある
+      const fbNameCell = row.querySelector('div.e2c-os-name');
+      if (fbNameCell) {
+        fbNameCell.style.display = '';
+        fbNameCell.style.alignItems = '';
+        fbNameCell.style.gap = '';
+        fbNameCell.style.paddingTop = '';
+        fbNameCell.style.paddingBottom = '';
+        fbNameCell.style.height = '';
+        fbNameCell.style.maxHeight = '';
+        fbNameCell.style.overflow = '';
+        fbNameCell.style.boxSizing = '';
+        // 非表示クラスも除去
+        const fbIcon = fbNameCell.querySelector('[class*=" e2c-sts-"], [class^="e2c-sts-"]');
+        if (fbIcon) fbIcon.classList.remove('e2c-icon-image-hidden');
+      }
+      // 古いwrapperが行の子として残っている場合は除去
+      const staleWrapper = row.querySelector(':scope > .e2c-thumb-wrapper');
+      if (staleWrapper) staleWrapper.remove();
+
       const checkContainer = row.querySelector('.e2c-check-container');
       if (checkContainer && checkContainer.nextSibling) {
         row.insertBefore(thumbEl, checkContainer.nextSibling);
