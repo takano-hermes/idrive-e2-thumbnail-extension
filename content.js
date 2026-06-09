@@ -802,6 +802,21 @@
     // IDrive e2 の .ts フォルダ（サムネイル格納用）は拡張子が .ts で
     // videoExts にマッチするが、フォルダなので処理しない（Issue #41）
     if (iconEl && iconEl.classList.contains('e2c-sts-folder')) {
+      // 以前の処理で nameCell に設定したスタイルをクリーンアップ
+      if (nameCell) {
+        nameCell.style.display = '';
+        nameCell.style.alignItems = '';
+        nameCell.style.gap = '';
+        nameCell.style.paddingTop = '';
+        nameCell.style.paddingBottom = '';
+        nameCell.style.height = '';
+        nameCell.style.maxHeight = '';
+        nameCell.style.overflow = '';
+        nameCell.style.boxSizing = '';
+      }
+      // 古いサムネイルwrapperが行の子として残っている場合は除去
+      const staleWrapper = row.querySelector(':scope > .e2c-thumb-wrapper');
+      if (staleWrapper) staleWrapper.remove();
       log('processRow: SKIP - folder, not a file');
       return;
     }
@@ -813,6 +828,23 @@
       if (iconEl) {
         iconEl.classList.remove('e2c-icon-image-hidden');
       }
+      // ★★★ 以前設定した flex スタイルをクリア ★★★
+      // 仮想スクロールで行が再利用された際、前の行のスタイルが残ると
+      // 非画像行のレイアウトが崩れる（Issue #52）
+      if (nameCell) {
+        nameCell.style.display = '';
+        nameCell.style.alignItems = '';
+        nameCell.style.gap = '';
+        nameCell.style.paddingTop = '';
+        nameCell.style.paddingBottom = '';
+        nameCell.style.height = '';
+        nameCell.style.maxHeight = '';
+        nameCell.style.overflow = '';
+        nameCell.style.boxSizing = '';
+      }
+      // 古いサムネイルwrapperが行の子として残っている場合は除去
+      const staleWrapper = row.querySelector(':scope > .e2c-thumb-wrapper');
+      if (staleWrapper) staleWrapper.remove();
       log('processRow: SKIP - not image/video');
       return;
     }
