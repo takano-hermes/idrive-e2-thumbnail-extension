@@ -826,11 +826,13 @@
       // 元のアイコン画像を非表示（テキストは残す）
       iconEl.classList.add('e2c-icon-image-hidden');
 
-      // ★★★ table-cell の vertical-align: middle で中央揃え ★★★
-      // display:flex にするとセルの高さが行と一致しなくなるため（#42）、
-      // 元の table-cell 表示を維持し、vertical-align で中央揃えする。
-      // !important でコンソールCSSの上書きを防止。
-      nameCell.style.setProperty('vertical-align', 'middle', 'important');
+      // ★★★ flex でセル内のコンテンツを中央揃え ★★★
+      // セル高さは後続のheight強制で行に固定されるため、
+      // display:flex にしても縮まない。align-items:center で
+      // サムネイルとテキストを確実に垂直中央揃えする（Issue #42）。
+      nameCell.style.display = 'flex';
+      nameCell.style.alignItems = 'center';
+      nameCell.style.gap = '4px';
       // アイコンspanのpaddingはCSSで除去済み。念のためセル自体のpaddingもリセット。
       nameCell.style.paddingTop = '0';
       nameCell.style.paddingBottom = '0';
