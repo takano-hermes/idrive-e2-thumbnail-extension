@@ -92,7 +92,10 @@
   function getFilename(row) {
     const nameDiv = row.querySelector('div.e2c-os-name');
     if (!nameDiv) return null;
-    const span = nameDiv.querySelector('span');
+    // ★★★ ファイル種別アイコンspanのみを対象 ★★★（Issue #55）
+    // showFallback() で追加した <span>🎬</span> に誤マッチしないよう、
+    // querySelector('span') ではなく e2c-sts-* クラスを条件にする
+    const span = nameDiv.querySelector('[class*=" e2c-sts-"], [class^="e2c-sts-"]');
     if (!span) return null;
     const title = span.getAttribute('title');
     if (title && title.trim()) return title.trim();
@@ -302,7 +305,7 @@
 
     function showFallback() {
       img.style.display = 'none';
-      const icon = document.createElement('span');
+      const icon = document.createElement('div');
       icon.className = 'e2c-thumb-fallback';
       icon.textContent = isVideo ? '🎬' : '🖼️';
       icon.style.cssText = `font-size:${settings.thumbSize * 0.5}px;opacity:0.5;cursor:pointer;`;
@@ -839,6 +842,8 @@
       // 古いサムネイルwrapperが行の子として残っている場合は除去
       const staleWrapper = row.querySelector(':scope > .e2c-thumb-wrapper');
       if (staleWrapper) staleWrapper.remove();
+      // 古い処理済みマーカーを削除（次の行内容に備える）
+      row.removeAttribute('data-e2c-processed');
       log('processRow: SKIP - folder, not a file');
       return;
     }
@@ -867,6 +872,8 @@
       // 古いサムネイルwrapperが行の子として残っている場合は除去
       const staleWrapper = row.querySelector(':scope > .e2c-thumb-wrapper');
       if (staleWrapper) staleWrapper.remove();
+      // 古い処理済みマーカーを削除（次の行内容に備える）
+      row.removeAttribute('data-e2c-processed');
       log('processRow: SKIP - not image/video');
       return;
     }
