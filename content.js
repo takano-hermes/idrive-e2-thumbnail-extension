@@ -837,11 +837,15 @@
         flexWrapper.style.cssText = 'display:flex;align-items:center;gap:4px;';
         nameCell.insertBefore(flexWrapper, iconEl);
       }
-      // iconEl が flexWrapper 内にいない場合（stale削除後など）は移動
+      // ★★★ サムネイルを先頭に挿入、テキストはその後 ★★★
+      // 左右順: [サムネイル] [テキスト（ファイル名）]（Issue #42）
+      flexWrapper.insertBefore(thumbEl, flexWrapper.firstChild);
+      // iconEl が flexWrapper 内にいない場合（初回やstale削除後）は移動
       if (iconEl.parentNode !== flexWrapper) {
         flexWrapper.appendChild(iconEl);
       }
-      flexWrapper.appendChild(thumbEl);
+      // table-cell 内でのflex wrapperの垂直中央揃えを保証
+      nameCell.style.verticalAlign = 'middle';
     } else {
       // フォールバック: e2c-os-name が見つからない場合
       log('processRow: WARN - e2c-os-name not found, using fallback position');
