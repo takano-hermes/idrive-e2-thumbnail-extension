@@ -826,26 +826,25 @@
       // 元のアイコン画像を非表示（テキストは残す）
       iconEl.classList.add('e2c-icon-image-hidden');
 
-      // ★★★ flex wrapper でサムネイル＋テキストを包み、確実に垂直中央揃え ★★★
-      // e2c-os-name (table-cell) 内で2つのインライン要素がそれぞれ異なる
-      // vertical-align 解釈を持つため、flex wrapper で包んで align-items:center
-      // により常に中央に揃える（Issue #42）
-      let flexWrapper = nameCell.querySelector('.e2c-thumb-flex');
-      if (!flexWrapper) {
-        flexWrapper = document.createElement('div');
-        flexWrapper.className = 'e2c-thumb-flex';
-        flexWrapper.style.cssText = 'display:flex;align-items:center;gap:4px;';
-        nameCell.insertBefore(flexWrapper, iconEl);
+      // ★★★ e2c-os-name 自身を flex コンテナにして確実に中央揃え ★★★
+      // table-cell + vertical-align はコンソールCSS（wide mode用）に
+      // 上書きされる可能性がある。
+      // display:flex + align-items:center なら常に垂直中央揃えが保証される（Issue #42）
+      nameCell.style.display = 'flex';
+      nameCell.style.alignItems = 'center';
+      nameCell.style.gap = '4px';
+      // サムネイルを先頭（左）に挿入 → [サムネイル, テキスト] の順
+      // ★ iconElがnameCell直下にいない場合（旧.e2c-thumb-flex内など）は先に移動
+      if (iconEl.parentNode !== nameCell) {
+        nameCell.appendChild(iconEl); // nameCell直下に移動
       }
-      // ★★★ サムネイルを先頭に挿入、テキストはその後 ★★★
-      // 左右順: [サムネイル] [テキスト（ファイル名）]（Issue #42）
-      flexWrapper.insertBefore(thumbEl, flexWrapper.firstChild);
-      // iconEl が flexWrapper 内にいない場合（初回やstale削除後）は移動
-      if (iconEl.parentNode !== flexWrapper) {
-        flexWrapper.appendChild(iconEl);
+      nameCell.insertBefore(thumbEl, iconEl);
+
+      // 旧バージョンの .e2c-thumb-flex が残っている場合は除去
+      const oldFlex = nameCell.querySelector('.e2c-thumb-flex');
+      if (oldFlex && oldFlex.parentNode === nameCell) {
+        oldFlex.remove();
       }
-      // table-cell 内でのflex wrapperの垂直中央揃えを保証
-      nameCell.style.verticalAlign = 'middle';
     } else {
       // フォールバック: e2c-os-name が見つからない場合
       log('processRow: WARN - e2c-os-name not found, using fallback position');
