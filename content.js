@@ -825,10 +825,23 @@
     if (iconEl && nameCell) {
       // 元のアイコン画像を非表示（テキストは残す）
       iconEl.classList.add('e2c-icon-image-hidden');
-      // ★★★ サムネイルを行の子として追加するのではなく、e2c-os-name内部に挿入 ★★★
-      // 行の子要素数を変えないことで、CDK Virtual Scroll の itemSize 計算に
-      // 影響を与えず、アクションメニューの表示位置ズレを防止する（Issue #39）
-      nameCell.insertBefore(thumbEl, iconEl);
+
+      // ★★★ flex wrapper でサムネイル＋テキストを包み、確実に垂直中央揃え ★★★
+      // e2c-os-name (table-cell) 内で2つのインライン要素がそれぞれ異なる
+      // vertical-align 解釈を持つため、flex wrapper で包んで align-items:center
+      // により常に中央に揃える（Issue #42）
+      let flexWrapper = nameCell.querySelector('.e2c-thumb-flex');
+      if (!flexWrapper) {
+        flexWrapper = document.createElement('div');
+        flexWrapper.className = 'e2c-thumb-flex';
+        flexWrapper.style.cssText = 'display:flex;align-items:center;gap:4px;';
+        nameCell.insertBefore(flexWrapper, iconEl);
+      }
+      // iconEl が flexWrapper 内にいない場合（stale削除後など）は移動
+      if (iconEl.parentNode !== flexWrapper) {
+        flexWrapper.appendChild(iconEl);
+      }
+      flexWrapper.appendChild(thumbEl);
     } else {
       // フォールバック: e2c-os-name が見つからない場合
       log('processRow: WARN - e2c-os-name not found, using fallback position');
