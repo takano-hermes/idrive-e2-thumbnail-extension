@@ -798,6 +798,14 @@
     // ファイル名列とアイコン要素を取得（stale復元と新規挿入で使い回す）
     const { iconEl, nameCell } = findOrigIconElements(row);
 
+    // ★★★ フォルダ行（e2c-sts-folder）はスキップ ★★★
+    // IDrive e2 の .ts フォルダ（サムネイル格納用）は拡張子が .ts で
+    // videoExts にマッチするが、フォルダなので処理しない（Issue #41）
+    if (iconEl && iconEl.classList.contains('e2c-sts-folder')) {
+      log('processRow: SKIP - folder, not a file');
+      return;
+    }
+
     if (!isImage && !isVideo) {
       // ★★★ 常にアイコン非表示クラスを削除 ★★★
       // SPA遷移後やフォルダ変更時は全wrapperが削除済みで existingWrapper が null でも
