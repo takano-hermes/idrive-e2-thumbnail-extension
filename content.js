@@ -238,8 +238,8 @@
   // ============================================================
   function createThumbnailElement(filename, ext, isVideo, bucket, prefix, region) {
     const wrapper = document.createElement('div');
-    wrapper.className = 'e2c-td e2c-thumb-wrapper';
-    wrapper.style.cssText = `width:${settings.thumbSize + 20}px;min-width:${settings.thumbSize + 20}px;display:flex;align-items:center;justify-content:center;position:relative;padding:2px 4px;`;
+    wrapper.className = 'e2c-thumb-wrapper';
+    wrapper.style.cssText = `display:inline-flex;align-items:center;justify-content:center;width:${settings.thumbSize + 20}px;min-width:${settings.thumbSize + 20}px;position:relative;vertical-align:middle;padding:2px 4px;`;
 
     const img = document.createElement('img');
     img.className = 'e2c-thumb-img';
@@ -815,9 +815,12 @@
     const thumbEl = createThumbnailElement(filename, ext, isVideo, bucket, prefix, region);
 
     if (iconEl && nameCell) {
-      // 元のアイコン画像を非表示（テキストは残す）、サムネイルをファイル名列の直前に挿入
+      // 元のアイコン画像を非表示（テキストは残す）
       iconEl.classList.add('e2c-icon-image-hidden');
-      row.insertBefore(thumbEl, nameCell);
+      // ★★★ サムネイルを行の子として追加するのではなく、e2c-os-name内部に挿入 ★★★
+      // 行の子要素数を変えないことで、CDK Virtual Scroll の itemSize 計算に
+      // 影響を与えず、アクションメニューの表示位置ズレを防止する（Issue #39）
+      nameCell.insertBefore(thumbEl, iconEl);
     } else {
       // フォールバック: e2c-os-name が見つからない場合
       log('processRow: WARN - e2c-os-name not found, using fallback position');

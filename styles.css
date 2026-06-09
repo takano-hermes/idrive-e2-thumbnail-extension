@@ -32,20 +32,19 @@
 }
 
 /* ★★★ ファイル種別アイコンの画像部分のみ非表示（テキストは残す） ★★★ */
+/* 注意: width/height/padding の変更は行わない。
+   CDK Virtual Scroll が行のitemSize計算にそれらの値を使うため、
+   寸法を変更するとアクションメニュー（削除・コピー・移動等）の
+   表示位置が1行分ずれる原因になる（Issue #39）。
+   background-image の除去のみでアイコン画像を消し、テキストは維持する。 */
 .e2c-icon-image-hidden {
   background-image: none !important;
   background: none !important;
-  padding: 0 !important;
-  min-width: 0 !important;
-  width: auto !important;
-  height: auto !important;
 }
 .e2c-icon-image-hidden::before,
 .e2c-icon-image-hidden::after {
   display: none !important;
   content: none !important;
-  width: 0 !important;
-  height: 0 !important;
 }
 
 @keyframes e2c-fade-in {
@@ -61,6 +60,13 @@
 @keyframes e2c-scale-in {
   from { transform: scale(0.9); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
+}
+
+/* ★★★ サムネイルが行の直接の子 → e2c-os-name内部に挿入されるようになった（Issue #39）★★★ */
+/* サムネイルをe2c-os-name内でinline-flex表示するスタイルはinline styleで設定。
+   ここでは補助的なスタイルのみ定義。 */
+.e2c-os-name .e2c-thumb-wrapper {
+  flex-shrink: 0;
 }
 
 /* ナビゲーションバー */
