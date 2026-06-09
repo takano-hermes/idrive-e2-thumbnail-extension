@@ -44,6 +44,9 @@
   background: none !important;
   /* 垂直位置をサムネイルwrapper（inline-flex, vertical-align:middle）と揃える（Issue #42） */
   vertical-align: middle !important;
+  /* アイコン用の固定 height を除去し、テキストの自然な高さに縮める。
+     width は変更しない（CDK Virtual Scroll の itemSize 計算に影響するため、#39）。 */
+  height: auto !important;
 }
 .e2c-icon-image-hidden::before,
 .e2c-icon-image-hidden::after {
