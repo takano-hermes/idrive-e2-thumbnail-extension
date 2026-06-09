@@ -36,10 +36,14 @@
    CDK Virtual Scroll が行のitemSize計算にそれらの値を使うため、
    寸法を変更するとアクションメニュー（削除・コピー・移動等）の
    表示位置が1行分ずれる原因になる（Issue #39）。
-   background-image の除去のみでアイコン画像を消し、テキストは維持する。 */
+   background-image の除去のみでアイコン画像を消し、テキストは維持する。
+   vertical-align: middle でサムネイルwrapperとテキストの垂直位置を
+   揃える（Issue #42）。 */
 .e2c-icon-image-hidden {
   background-image: none !important;
   background: none !important;
+  /* 垂直位置をサムネイルwrapper（inline-flex, vertical-align:middle）と揃える（Issue #42） */
+  vertical-align: middle !important;
 }
 .e2c-icon-image-hidden::before,
 .e2c-icon-image-hidden::after {
