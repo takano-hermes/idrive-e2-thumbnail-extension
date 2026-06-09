@@ -45,8 +45,14 @@
   /* 垂直位置をサムネイルwrapper（inline-flex, vertical-align:middle）と揃える（Issue #42） */
   vertical-align: middle !important;
   /* アイコン用の固定 height を除去し、テキストの自然な高さに縮める。
-     width は変更しない（CDK Virtual Scroll の itemSize 計算に影響するため、#39）。 */
+     元のCSSが padding や line-height で余分な高さを持っている場合があるため
+     padding と line-height もリセットする（Issue #42）。 */
   height: auto !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  line-height: normal !important;
+  max-height: 1.5em !important;
+  overflow: hidden !important;
 }
 .e2c-icon-image-hidden::before,
 .e2c-icon-image-hidden::after {

@@ -833,6 +833,9 @@
       nameCell.style.display = 'flex';
       nameCell.style.alignItems = 'center';
       nameCell.style.gap = '4px';
+      // 高さを行に合わせ、元のセルのpaddingが行を超えないようにする（Issue #42）
+      nameCell.style.paddingTop = '0';
+      nameCell.style.paddingBottom = '0';
       // サムネイルを先頭（左）に挿入 → [サムネイル, テキスト] の順
       // ★ iconElがnameCell直下にいない場合（旧.e2c-thumb-flex内など）は先に移動
       if (iconEl.parentNode !== nameCell) {
